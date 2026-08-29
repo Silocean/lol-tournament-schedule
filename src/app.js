@@ -485,18 +485,13 @@ export function renderBrand() {
 export function renderHero() {
   const league = currentLeague()
   const split = currentSplit()
-  const venue = activeVenue()
   const today = todayLeague()
   const todays = splitEvents()
     .filter((e) => leagueDateKey(e.startTime) === today)
     .sort((a, b) => a.startTime.localeCompare(b.startTime))
 
-  const title = venue
-    ? `${venue.city} · ${venue.host}`
-    : `${split.name}赛程`
-  const subtitle = venue
-    ? `${split.name}组内赛 ${venue.label}（${venue.start.slice(5).replace('-', '/')} - ${venue.end.slice(5).replace('-', '/')}）`
-    : `${split.start.replaceAll('-', '.')} - ${split.end.replaceAll('-', '.')}`
+  const title = `${split.name}赛程`
+  const subtitle = `${split.start.replaceAll('-', '.')} - ${split.end.replaceAll('-', '.')}`
 
   const next = splitEvents()
     .filter((e) => matchStatus(e) === 'upcoming' || matchStatus(e) === 'live')
@@ -544,23 +539,10 @@ export function renderHero() {
   `
 
   const venuesEl = document.querySelector('#venues')
-  if (!split.venues) {
+  if (venuesEl) {
     venuesEl.innerHTML = ''
     venuesEl.style.display = 'none'
-    return
   }
-  venuesEl.style.display = 'grid'
-  venuesEl.innerHTML = split.venues
-    .map((v) => {
-      const active = venue && v.week === venue.week
-      return `
-        <div class="venue ${active ? 'active' : ''}">
-          <div class="city">${escapeHtml(v.city)} · ${escapeHtml(v.host)}</div>
-          <div class="meta">${escapeHtml(v.label)} · ${v.start.slice(5).replace('-', '/')} - ${v.end.slice(5).replace('-', '/')}</div>
-        </div>
-      `
-    })
-    .join('')
 }
 
 function formatGprDate(iso) {
