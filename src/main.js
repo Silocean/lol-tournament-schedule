@@ -1,9 +1,10 @@
-import { bootstrap, bindGprEvents, bindLeagueSwitch, bindTeamModalEvents, renderAll, renderClock } from './app.js'
+import { bootstrap, bindGprEvents, bindLeagueSwitch, bindPlayoffEvents, bindTeamModalEvents, renderAll, renderClock } from './app.js'
 import { initThemeSwitcher } from './theme.js'
 
 initThemeSwitcher()
 bindLeagueSwitch()
 bindGprEvents()
+bindPlayoffEvents()
 bindTeamModalEvents()
 bootstrap()
 setInterval(renderClock, 1000)

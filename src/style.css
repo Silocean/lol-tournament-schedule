@@ -860,6 +860,206 @@ select {
   color: var(--muted);
 }
 
+.playoff-panel {
+  display: grid;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 22px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+}
+
+.playoff-panel[hidden] {
+  display: none !important;
+}
+
+.playoff-panel.is-collapsed {
+  padding: 8px 12px;
+}
+
+.playoff-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+.playoff-toggle {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px 16px;
+  width: 100%;
+  margin: 0;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.playoff-toggle h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.playoff-toggle .hint {
+  margin: 4px 0 0;
+}
+
+.playoff-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  justify-content: flex-end;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.playoff-panel:not(.is-collapsed) .playoff-toggle {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.playoff-body {
+  display: grid;
+  gap: 16px;
+}
+
+.playoff-knights,
+.playoff-qualifier,
+.playoff-grand,
+.playoff-bracket-section {
+  display: grid;
+  gap: 10px;
+}
+
+.playoff-knights h3,
+.playoff-qualifier h3,
+.playoff-grand h3,
+.playoff-bracket-section h3 {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.playoff-knights-matches,
+.playoff-qualifier-matches {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.playoff-bracket {
+  display: grid;
+  gap: 18px;
+}
+
+.bracket-columns {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.bracket-col {
+  display: grid;
+  gap: 8px;
+  min-width: 168px;
+  flex: 1 0 168px;
+}
+
+.bracket-col-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.bracket-col-matches {
+  display: grid;
+  gap: 12px;
+  align-content: space-around;
+  min-height: 100%;
+}
+
+.bracket-match {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 14px;
+  background: var(--soft-2);
+  border: 1px solid var(--line);
+}
+
+.bracket-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.bracket-row .team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bracket-row .team.right {
+  justify-content: flex-end;
+}
+
+.bracket-row .team-hit {
+  grid-template-columns: 28px max-content;
+  column-gap: 8px;
+  padding: 2px 4px;
+}
+
+.bracket-row .team.right .team-hit {
+  grid-template-columns: max-content 28px;
+}
+
+.bracket-row .team img,
+.bracket-row .team .team-img-fallback {
+  width: 28px;
+  height: 28px;
+}
+
+.bracket-match.is-live {
+  border-color: color-mix(in srgb, var(--gold) 55%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold) 25%, transparent);
+}
+
+.bracket-match-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.bracket-score {
+  text-align: center;
+  font-family: Orbitron, sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--gold);
+}
+
+.bracket-meta {
+  display: flex;
+  justify-content: center;
+  min-height: 18px;
+}
+
+.playoff-grand .bracket-match {
+  max-width: 240px;
+}
+
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.9fr);

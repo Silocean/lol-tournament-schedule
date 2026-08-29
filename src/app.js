@@ -11,6 +11,13 @@ import {
   fetchTeamDetail,
   fetchGpr,
 } from './api.js'
+import {
+  buildPlayoffData,
+  formatPlayoffScore,
+  matchStatus as playoffMatchStatus,
+  playoffHighlight,
+  winnerCode as playoffWinnerCode,
+} from '../lib/playoff.js'
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -31,6 +38,7 @@ export const state = {
   gprScope: 'all',
   gprOpen: false,
   gprExpanded: false,
+  playoffOpen: false,
 }
 
 export function currentLeague() {
@@ -198,6 +206,25 @@ export function splitEvents() {
     const day = leagueDateKey(e.startTime)
     return day >= split.start && day <= split.end
   })
+}
+
+function playoffEvents() {
+  const split = currentSplit()
+  const list = state.events.filter((e) => {
+    if (e.type && e.type !== 'match') return false
+    const block = e.blockName || ''
+    if (!block.match(/淘汰|决赛|资格|入围/)) return false
+    const day = leagueDateKey(e.startTime)
+    return day >= split.start && day <= split.end
+  })
+  for (const e of state.events) {
+    if (e.type && e.type !== 'match') continue
+    if ((e.blockName || '') !== '决赛') continue
+    const day = leagueDateKey(e.startTime)
+    if (day < split.start || day > split.end) continue
+    if (!list.some((x) => String(x.match?.id) === String(e.match?.id))) list.push(e)
+  }
+  return list
 }
 
 export function filteredEvents() {
@@ -698,6 +725,187 @@ export async function loadGprPanel({ force = false } = {}) {
   renderGpr()
 }
 
+function playoffPreviewText(item) {
+  if (!item?.match) return ''
+  const teams = item.match.teams || []
+  const [a, b] = teams
+  const codeA = a?.code && a.code !== 'TBD' ? a.code : '待定'
+  const codeB = b?.code && b.code !== 'TBD' ? b.code : '待定'
+  const status = playoffMatchStatus(item.match, item)
+  const score = formatPlayoffScore(item.match, status)
+  const label = item.event?.blockName || ''
+  return `${codeA} ${score} ${codeB}${label ? ` · ${label}` : ''}`
+}
+
+function bracketTeamRow(team, winner, align = 'left') {
+  const code = team?.code && team.code !== 'TBD' ? team.code : '待定'
+  const clickable = code !== '待定'
+  const cls = [
+    'team',
+    align === 'right' ? 'right' : '',
+    winner && team?.code === winner ? 'winner' : '',
+    winner && team?.code && team.code !== winner ? 'loser' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+  const body = `${teamImg(team?.image, code)}<b>${escapeHtml(code)}</b>`
+  if (!clickable) return `<div class="${cls}">${body}</div>`
+  return `
+    <div class="${cls}">
+      <button type="button" class="team-hit" data-open-team="${escapeHtml(code)}" title="查看 ${escapeHtml(code)} 详情">
+        ${body}
+      </button>
+    </div>
+  `
+}
+
+function hidePlayoffPanel(root) {
+  root.hidden = true
+  root.classList.add('is-collapsed')
+  root.innerHTML = ''
+}
+
+function renderBracketMatch(item, label = '') {
+  if (!item?.match) return ''
+  const match = item.match
+  const teams = match.teams || [{ code: 'TBD' }, { code: 'TBD' }]
+  const [home, away] = teams.length >= 2 ? teams : [teams[0], { code: 'TBD' }]
+  const status = playoffMatchStatus(match, item)
+  const winner = status === 'completed' ? playoffWinnerCode(match) : ''
+  const score = formatPlayoffScore(match, status)
+  const time = item.event?.startTime ? formatTime(item.event.startTime) : ''
+  const day = item.event?.startTime ? formatDate(item.event.startTime).split(' ')[0] : ''
+  return `
+    <article class="bracket-match ${status === 'live' ? 'is-live' : ''}">
+      ${label ? `<div class="bracket-match-label">${escapeHtml(label)}</div>` : ''}
+      <div class="bracket-row">
+        ${bracketTeamRow(home, winner)}
+        <div class="bracket-score">${escapeHtml(score)}</div>
+        ${bracketTeamRow(away, winner, 'right')}
+      </div>
+      <div class="bracket-meta">
+        ${status === 'live' ? `<span class="badge live">LIVE</span>` : status === 'upcoming' && time ? `<span class="badge soon">${escapeHtml(day)} ${escapeHtml(time)}</span>` : status === 'completed' ? `<span class="badge done">已结束</span>` : ''}
+      </div>
+    </article>
+  `
+}
+
+function renderBracketColumns(columns) {
+  return columns
+    .map(
+      (col) => `
+        <div class="bracket-col">
+          <div class="bracket-col-label">${escapeHtml(col.label)}</div>
+          <div class="bracket-col-matches">
+            ${col.matches.map((item) => renderBracketMatch(item)).join('')}
+          </div>
+        </div>
+      `,
+    )
+    .join('')
+}
+
+export function renderPlayoffBracket() {
+  const root = document.querySelector('#playoff')
+  if (!root) return
+  const league = currentLeague()
+  const config = league.playoff
+  if (!config) {
+    hidePlayoffPanel(root)
+    return
+  }
+
+  const data = buildPlayoffData(state.standings, playoffEvents(), config)
+  if (!data) {
+    hidePlayoffPanel(root)
+    return
+  }
+
+  root.hidden = false
+  const open = state.playoffOpen
+  const highlight = playoffHighlight(data)
+  const preview = highlight ? playoffPreviewText(highlight) : '季后赛对阵'
+  root.classList.toggle('is-collapsed', !open)
+
+  const playInLabel = config.playInLabel || '入围赛'
+  const formatHint = config.format || '双败淘汰'
+  const hasLower = data.bracket.lower.some((col) => col.matches.length)
+
+  const knightsHtml = data.knights.length
+    ? `
+      <div class="playoff-knights">
+        <h3>${escapeHtml(playInLabel)}</h3>
+        <div class="playoff-knights-matches">
+          ${data.knights.map((item) => renderBracketMatch(item)).join('')}
+        </div>
+      </div>`
+    : ''
+
+  const qualifierHtml = data.qualifier.length
+    ? `
+      <div class="playoff-qualifier">
+        <h3>赛区资格赛</h3>
+        <div class="playoff-qualifier-matches">
+          ${data.qualifier.map((item, i) => renderBracketMatch(item, `R${i + 1}`)).join('')}
+        </div>
+      </div>`
+    : ''
+
+  const finalHtml = data.bracket.final
+    ? `
+      <div class="playoff-grand">
+        <h3>总决赛</h3>
+        ${renderBracketMatch(data.bracket.final)}
+      </div>`
+    : ''
+
+  root.innerHTML = `
+    <div class="playoff-top">
+      <button type="button" class="playoff-toggle" data-playoff-open aria-expanded="${open ? 'true' : 'false'}" aria-label="${open ? '收起季后赛对阵' : '展开季后赛对阵'}">
+        <div>
+          <h2>${escapeHtml(config.label || '季后赛对阵')}</h2>
+          <p class="hint">${escapeHtml(currentSplit().name)} · ${escapeHtml(formatHint)} · 实时同步赛程</p>
+        </div>
+        ${open ? '' : `<div class="playoff-preview">${escapeHtml(preview)}</div>`}
+      </button>
+    </div>
+    ${
+      open
+        ? `
+    <div class="playoff-body">
+      ${knightsHtml}
+      <div class="playoff-bracket">
+        <div class="playoff-bracket-section">
+          <h3>胜者组</h3>
+          <div class="bracket-columns">${renderBracketColumns(data.bracket.upper)}</div>
+        </div>
+        ${
+          hasLower
+            ? `<div class="playoff-bracket-section">
+          <h3>败者组</h3>
+          <div class="bracket-columns">${renderBracketColumns(data.bracket.lower)}</div>
+        </div>`
+            : ''
+        }
+      </div>
+      ${finalHtml}
+      ${qualifierHtml}
+    </div>`
+        : ''
+    }
+  `
+}
+
+export function bindPlayoffEvents() {
+  if (bindPlayoffEvents.bound) return
+  bindPlayoffEvents.bound = true
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('[data-playoff-open]')) return
+    state.playoffOpen = !state.playoffOpen
+    renderPlayoffBracket()
+  })
+}
+
 export function renderFilters() {
   const teams = teamCodes()
   const splits = currentLeague().splits
@@ -1112,6 +1320,7 @@ export function renderAll() {
   renderClock()
   renderHero()
   renderGpr()
+  renderPlayoffBracket()
   renderFilters()
   renderSchedule()
   renderStandings()
@@ -1167,10 +1376,12 @@ export async function switchLeague(leagueId) {
   state.team = ''
   state.filter = 'all'
   state.stage = 'all'
+  state.playoffOpen = false
   state.events = []
   state.standings = []
   ensureSplitId()
   renderBrand()
+  renderPlayoffBracket()
   await bootstrap({ silent: false, force: true })
 }
 

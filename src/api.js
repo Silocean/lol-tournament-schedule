@@ -75,6 +75,27 @@ export const LEAGUES = {
       { id: 'playoffs', label: '季后赛' },
       { id: 'qualifier', label: '资格赛' },
     ],
+    playoff: {
+      label: '季后赛对阵',
+      format: '双败淘汰',
+      playoffStage: 'playoffs',
+      playInStages: ['playoff_play_in_knights_rival', 'playoff_play_in'],
+      playInLabel: '骑士之路',
+      qualifierStages: ['regional_qualifier'],
+      bracket: {
+        upper: [
+          { label: '首轮', slots: [0, 1] },
+          { label: '第二轮', slots: [2, 3] },
+          { label: '胜者组决赛', slots: [8] },
+        ],
+        lower: [
+          { label: '败者组首轮', slots: [4, 5] },
+          { label: '败者组第二轮', slots: [6, 7] },
+          { label: '败者组第三轮', slots: [9] },
+          { label: '败者组决赛', slots: [10] },
+        ],
+      },
+    },
   },
   lck: {
     id: '98767991310872058',
@@ -140,6 +161,28 @@ export const LEAGUES = {
       { id: 'playoffs', label: '淘汰赛' },
       { id: 'qualifier', label: '资格赛' },
     ],
+    // ponytail: LCK regional_championship 槽位按官方 API 顺序，非按开赛日排序（5=胜决、6=败二）
+    playoff: {
+      label: '季后赛对阵',
+      format: '双败淘汰',
+      playoffStage: 'regional_championship',
+      playInStages: ['play_ins'],
+      playInLabel: '入围赛',
+      finalSlot: 9,
+      bracket: {
+        upper: [
+          { label: '首轮', slots: [0, 1] },
+          { label: '第二轮', slots: [2, 3] },
+          { label: '胜者组决赛', slots: [5] },
+        ],
+        lower: [
+          { label: '败者组首轮', slots: [4] },
+          { label: '败者组第二轮', slots: [6] },
+          { label: '败者组第三轮', slots: [7] },
+          { label: '败者组决赛', slots: [8] },
+        ],
+      },
+    },
   },
   lec: {
     id: '98767991302996019',
