@@ -82,6 +82,7 @@ export const LEAGUES = {
       playInStages: ['playoff_play_in_knights_rival', 'playoff_play_in'],
       playInLabel: '骑士之路',
       qualifierStages: ['regional_qualifier'],
+      finalSlot: 11,
       bracket: {
         upper: [
           { label: '首轮', slots: [0, 1] },
