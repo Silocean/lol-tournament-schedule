@@ -83,15 +83,16 @@ export const LEAGUES = {
       playInLabel: '骑士之路',
       qualifierStages: ['regional_qualifier'],
       finalSlot: 11,
+      // standings 顺序穿插上下半区：胜者组决赛在 [6]，败者组第二轮在 [7]/[8]
       bracket: {
         upper: [
           { label: '首轮', slots: [0, 1] },
           { label: '第二轮', slots: [2, 3] },
-          { label: '胜者组决赛', slots: [8] },
+          { label: '胜者组决赛', slots: [6] },
         ],
         lower: [
           { label: '败者组首轮', slots: [4, 5] },
-          { label: '败者组第二轮', slots: [6, 7] },
+          { label: '败者组第二轮', slots: [7, 8] },
           { label: '败者组第三轮', slots: [9] },
           { label: '败者组决赛', slots: [10] },
         ],
