@@ -434,9 +434,111 @@ export const LEAGUES = {
       { id: 'qualifier', label: '资格赛' },
     ],
   },
+  worlds: {
+    id: '98767975604431411',
+    slug: 'worlds',
+    code: 'Worlds',
+    name: '全球总决赛',
+    region: '国际赛区',
+
+    splits: [
+      {
+        id: '2026',
+        name: '2026 全球总决赛',
+        tournamentId: '115660540725177488',
+        start: '2026-10-15',
+        end: '2026-11-14',
+        current: true,
+        venues: [
+          {
+            week: 1,
+            label: '入围赛',
+            start: '2026-10-15',
+            end: '2026-10-18',
+            city: '洛杉矶',
+            host: 'Riot Games Arena',
+          },
+          {
+            week: 2,
+            label: '瑞士轮 / 淘汰赛',
+            start: '2026-10-23',
+            end: '2026-11-08',
+            city: '得州 Allen',
+            host: 'CUTX Event Center',
+          },
+          {
+            week: 3,
+            label: '总决赛',
+            start: '2026-11-14',
+            end: '2026-11-14',
+            city: '布鲁克林',
+            host: 'Barclays Center',
+          },
+        ],
+      },
+    ],
+    teamNames: {},
+    teamSlugs: {},
+    ascentTeams: [],
+    nirvanaTeams: [],
+    stageFilters: [
+      { id: 'all', label: '全部阶段' },
+      { id: 'knights', label: '入围赛' },
+      { id: 'regular', label: '瑞士轮' },
+      { id: 'playoffs', label: '淘汰赛' },
+    ],
+    overview: {
+      title: '2026 全球总决赛',
+      subtitle: '北美三城 · 10.15 – 11.14',
+      stages: [
+        {
+          name: '入围赛',
+          date: '10.15 – 10.18',
+          venue: '洛杉矶 Riot Games Arena',
+          note: '4 队双败 BO5 · 1 席晋级瑞士轮',
+        },
+        {
+          name: '瑞士轮',
+          date: '10.23 – 10.31',
+          venue: '得州 Allen CUTX',
+          note: '16 队 · 先到 3 胜晋级八强',
+        },
+        {
+          name: '淘汰赛',
+          date: '11.03 – 11.08',
+          venue: '得州 Allen CUTX',
+          note: '八强单败 · 四分之一决赛 / 半决赛',
+        },
+        {
+          name: '总决赛',
+          date: '11.14',
+          venue: '布鲁克林 Barclays Center',
+          note: '全球总冠军之夜',
+        },
+      ],
+    },
+    playoff: {
+      label: '世界赛对阵',
+      format: '入围赛 · 瑞士轮 · 单败淘汰',
+      playoffStage: 'knockouts',
+      playInStages: ['play_ins'],
+      playInLabel: '入围赛',
+      swissStage: 'swiss',
+      swissLabel: '瑞士轮',
+      upperLabel: '淘汰赛',
+      finalSlot: 6,
+      bracket: {
+        upper: [
+          { label: '四分之一决赛', slots: [0, 1, 2, 3] },
+          { label: '半决赛', slots: [4, 5] },
+        ],
+        lower: [],
+      },
+    },
+  },
 }
 
-export const LEAGUE_ORDER = ['lpl', 'lck', 'lec', 'lcs', 'lcp', 'cblol']
+export const LEAGUE_ORDER = ['worlds', 'lpl', 'lck', 'lec', 'lcs', 'lcp', 'cblol']
 
 export const ROLE_CN = {
   top: '上单',
@@ -529,7 +631,10 @@ function isMatchEvent(event) {
   if (!event) return false
   if (event.type && event.type !== 'match') return false
   const teams = event.match?.teams || []
-  return teams.some((t) => t?.code && t.code !== 'TBD')
+  if (teams.some((t) => t?.code && t.code !== 'TBD')) return true
+  // 保留淘汰/瑞士/入围等 TBD 场次，便于世界赛等尚未定队的赛程与对阵同步时间
+  const block = event.blockName || ''
+  return /淘汰|决赛|瑞士|入围|资格|四分|半决/.test(block)
 }
 
 const eventsCacheByLeague = new Map()

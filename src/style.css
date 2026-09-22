@@ -930,10 +930,115 @@ select {
   gap: 16px;
 }
 
+.playoff-overview {
+  display: grid;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--soft-2);
+}
+
+.playoff-overview-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: baseline;
+}
+
+.playoff-overview-head strong {
+  font-size: 15px;
+}
+
+.playoff-overview-head span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.playoff-overview-stages {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.playoff-overview-card {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+
+.playoff-overview-name {
+  font-weight: 700;
+}
+
+.playoff-overview-date,
+.playoff-overview-venue {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.playoff-overview-card p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--ink);
+  opacity: 0.85;
+}
+
+.playoff-swiss-placeholder {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px dashed var(--line);
+  background: var(--soft-2);
+}
+
+.playoff-swiss-placeholder p {
+  margin: 0;
+}
+
+.playoff-swiss-placeholder .hint,
+.playoff-swiss .hint {
+  margin-top: 6px;
+}
+
+.empty-rich {
+  display: grid;
+  gap: 8px;
+  text-align: left;
+  padding: 18px 16px;
+}
+
+.empty-rich strong {
+  font-size: 15px;
+}
+
+.empty-rich p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.empty-stages {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.empty-stages li {
+  margin: 4px 0;
+}
+
+.empty-stages b {
+  color: var(--ink);
+}
+
 .playoff-knights,
 .playoff-qualifier,
 .playoff-grand,
-.playoff-bracket-section {
+.playoff-bracket-section,
+.playoff-swiss {
   display: grid;
   gap: 10px;
 }
@@ -941,7 +1046,8 @@ select {
 .playoff-knights h3,
 .playoff-qualifier h3,
 .playoff-grand h3,
-.playoff-bracket-section h3 {
+.playoff-bracket-section h3,
+.playoff-swiss h3 {
   margin: 0;
   font-size: 13px;
   letter-spacing: 0.08em;
@@ -950,7 +1056,8 @@ select {
 }
 
 .playoff-knights-matches,
-.playoff-qualifier-matches {
+.playoff-qualifier-matches,
+.playoff-swiss-matches {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 10px;

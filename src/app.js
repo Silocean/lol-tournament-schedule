@@ -113,7 +113,15 @@ export function stageOf(event) {
   const block = event.blockName || ''
   if (block.includes('资格')) return 'qualifier'
   if (block.includes('骑士') || block.includes('入围')) return 'knights'
-  if (block.includes('淘汰') || block.includes('决赛')) return 'playoffs'
+  if (block.includes('瑞士')) return 'regular'
+  if (
+    block.includes('淘汰') ||
+    block.includes('决赛') ||
+    block.includes('四分') ||
+    block.includes('半决')
+  ) {
+    return 'playoffs'
+  }
   return 'regular'
 }
 
@@ -213,7 +221,7 @@ function playoffEvents() {
   const list = state.events.filter((e) => {
     if (e.type && e.type !== 'match') return false
     const block = e.blockName || ''
-    if (!block.match(/淘汰|决赛|资格|入围/)) return false
+    if (!block.match(/淘汰|决赛|资格|入围|瑞士|四分|半决/)) return false
     const day = leagueDateKey(e.startTime)
     return day >= split.start && day <= split.end
   })
@@ -531,8 +539,20 @@ export function renderHero() {
               })
               .join('')
           : `<div class="today-empty">
-              <strong>今日暂无比赛</strong>
-              <p>${nextLabel ? escapeHtml(nextLabel) : '本赛段后续赛程见下方列表'}</p>
+              <strong>${
+                currentLeague().overview && !nextLabel
+                  ? '世界赛赛程待公布'
+                  : '今日暂无比赛'
+              }</strong>
+              <p>${
+                nextLabel
+                  ? escapeHtml(nextLabel)
+                  : currentLeague().overview
+                    ? escapeHtml(
+                        `${currentLeague().overview.subtitle || ''} · 展开上方对阵面板查看阶段与场馆`,
+                      )
+                    : '本赛段后续赛程见下方列表'
+              }</p>
             </div>`
       }
     </div>
@@ -806,12 +826,37 @@ export function renderPlayoffBracket() {
   root.hidden = false
   const open = state.playoffOpen
   const highlight = playoffHighlight(data)
-  const preview = highlight ? playoffPreviewText(highlight) : '季后赛对阵'
+  const preview = highlight ? playoffPreviewText(highlight) : config.label || '对阵图'
   root.classList.toggle('is-collapsed', !open)
 
   const playInLabel = config.playInLabel || '入围赛'
   const formatHint = config.format || '双败淘汰'
+  const upperLabel = config.upperLabel || '胜者组'
   const hasLower = data.bracket.lower.some((col) => col.matches.length)
+  const overview = league.overview
+
+  const overviewHtml = overview
+    ? `
+      <div class="playoff-overview">
+        <div class="playoff-overview-head">
+          <strong>${escapeHtml(overview.title || config.label || '赛程概览')}</strong>
+          ${overview.subtitle ? `<span>${escapeHtml(overview.subtitle)}</span>` : ''}
+        </div>
+        <div class="playoff-overview-stages">
+          ${(overview.stages || [])
+            .map(
+              (stage) => `
+            <article class="playoff-overview-card">
+              <div class="playoff-overview-name">${escapeHtml(stage.name || '')}</div>
+              <div class="playoff-overview-date">${escapeHtml(stage.date || '')}</div>
+              <div class="playoff-overview-venue">${escapeHtml(stage.venue || '')}</div>
+              ${stage.note ? `<p>${escapeHtml(stage.note)}</p>` : ''}
+            </article>`,
+            )
+            .join('')}
+        </div>
+      </div>`
+    : ''
 
   const knightsHtml = data.knights.length
     ? `
@@ -822,6 +867,30 @@ export function renderPlayoffBracket() {
         </div>
       </div>`
     : ''
+
+  const swiss = data.swiss
+  const swissHtml =
+    swiss && swiss.total
+      ? `
+      <div class="playoff-swiss">
+        <h3>${escapeHtml(swiss.label || '瑞士轮')}</h3>
+        ${
+          swiss.known.length
+            ? `<div class="playoff-swiss-matches">
+                ${swiss.known.map((item) => renderBracketMatch(item)).join('')}
+              </div>
+              ${
+                swiss.known.length < swiss.total
+                  ? `<p class="hint">已确定 ${swiss.known.length} / ${swiss.total} 场 · 其余对阵待抽签公布</p>`
+                  : ''
+              }`
+            : `<div class="playoff-swiss-placeholder">
+                <p><strong>${swiss.total} 场赛程占位已就绪</strong></p>
+                <p class="hint">16 支队伍 · 先到 3 胜晋级八强 · 对阵与开赛时间待官方公布</p>
+              </div>`
+        }
+      </div>`
+      : ''
 
   const qualifierHtml = data.qualifier.length
     ? `
@@ -843,7 +912,7 @@ export function renderPlayoffBracket() {
 
   root.innerHTML = `
     <div class="playoff-top">
-      <button type="button" class="playoff-toggle" data-playoff-open aria-expanded="${open ? 'true' : 'false'}" aria-label="${open ? '收起季后赛对阵' : '展开季后赛对阵'}">
+      <button type="button" class="playoff-toggle" data-playoff-open aria-expanded="${open ? 'true' : 'false'}" aria-label="${open ? '收起对阵图' : '展开对阵图'}">
         <div>
           <h2>${escapeHtml(config.label || '季后赛对阵')}</h2>
           <p class="hint">${escapeHtml(currentSplit().name)} · ${escapeHtml(formatHint)} · 实时同步赛程</p>
@@ -855,10 +924,12 @@ export function renderPlayoffBracket() {
       open
         ? `
     <div class="playoff-body">
+      ${overviewHtml}
       ${knightsHtml}
+      ${swissHtml}
       <div class="playoff-bracket">
         <div class="playoff-bracket-section">
-          <h3>胜者组</h3>
+          <h3>${escapeHtml(upperLabel)}</h3>
           <div class="bracket-columns">${renderBracketColumns(data.bracket.upper)}</div>
         </div>
         ${
@@ -955,7 +1026,24 @@ export function renderSchedule() {
   const events = filteredEvents()
   const root = document.querySelector('#schedule')
   if (!events.length) {
-    root.innerHTML = `<div class="empty">没有符合筛选条件的比赛</div>`
+    const overview = currentLeague().overview
+    if (overview) {
+      root.innerHTML = `
+        <div class="empty empty-rich">
+          <strong>${escapeHtml(overview.title || '赛程即将公布')}</strong>
+          <p>${escapeHtml(overview.subtitle || '官方赛程与对阵发布后将自动同步到此')}</p>
+          <ul class="empty-stages">
+            ${(overview.stages || [])
+              .map(
+                (s) =>
+                  `<li><b>${escapeHtml(s.name || '')}</b> ${escapeHtml(s.date || '')} · ${escapeHtml(s.venue || '')}</li>`,
+              )
+              .join('')}
+          </ul>
+        </div>`
+    } else {
+      root.innerHTML = `<div class="empty">没有符合筛选条件的比赛</div>`
+    }
     return
   }
 
@@ -1016,7 +1104,13 @@ export function renderStandings() {
   const diffs = gameDiffMap()
   const root = document.querySelector('#standings')
   if (!sections.length) {
-    root.innerHTML = `<div class="empty">暂无积分榜</div>`
+    const overview = currentLeague().overview
+    root.innerHTML = overview
+      ? `<div class="empty empty-rich">
+          <strong>积分 / 瑞士轮战绩待更新</strong>
+          <p>出线队伍与赛果同步后将显示于此。可先查看上方「世界赛对阵」占位图。</p>
+        </div>`
+      : `<div class="empty">暂无积分榜</div>`
     return
   }
 
